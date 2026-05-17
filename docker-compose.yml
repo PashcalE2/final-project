@@ -1,0 +1,93 @@
+name: myapp
+
+services:
+  auth-postgres:
+    image: postgres:latest
+    container_name: auth-postgres
+    ports: 
+      - ${AUTH_POSTGRES_PORT}:5432
+    environment:
+      POSTGRES_USER: ${AUTH_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${AUTH_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${AUTH_POSTGRES_NAME}
+    healthcheck:
+      test: ["CMD", "pg_isready -d ${AUTH_POSTGRES_NAME} -U ${AUTH_POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+  
+  auth-redis:
+    image: redis:latest
+    container_name: auth-redis
+    ports:
+      - ${AUTH_REDIS_PORT}:6379
+    restart: always
+    command: redis-server --requirepass ${AUTH_REDIS_PASSWORD}
+    
+  auth-service:
+    container_name: auth-service
+    depends_on:
+      - auth-postgres
+      - auth-redis
+    build: ./auth-service
+    ports:
+      - ${AUTH_BACKEND_PORT}:8000
+    environment:
+      POSTGRES_HOST: auth-postgres
+      POSTGRES_USER: ${AUTH_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${AUTH_POSTGRES_PASSWORD}
+      POSTGRES_NAME: ${AUTH_POSTGRES_NAME}
+      POSTGRES_PORT: ${AUTH_POSTGRES_PORT}
+
+      REDIS_HOST: auth-redis
+      REDIS_PORT: ${AUTH_REDIS_PORT}
+      REDIS_PASSWORD: ${AUTH_REDIS_PASSWORD}
+      REDIS_EXPIRATION_AT: ${AUTH_REDIS_EXPIRATION_AT}
+
+      BACKEND_WORKERS: ${AUTH_BACKEND_WORKERS}
+      BACKEND_REFRESH_SECRET: ${AUTH_BACKEND_REFRESH_SECRET}
+      BACKEND_ACCESS_SECRET: ${AUTH_BACKEND_ACCESS_SECRET}
+      BACKEND_REFRESH_TOKEN_EXPIRATION_MINUTES: ${AUTH_BACKEND_REFRESH_TOKEN_EXPIRATION_MINUTES}
+      BACKEND_ACCESS_TOKEN_EXPIRATION_MINUTES: ${AUTH_BACKEND_ACCESS_TOKEN_EXPIRATION_MINUTES}
+
+  rabbitmq-broker:
+    container_name: rabbitmq-broker
+    image: rabbitmq:latest
+    ports: 
+      - ${RABBITMQ_PORT}:5672
+      - ${RABBITMQ_MANAGE_PORT}:15672
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  permission-service:
+    container_name: permission-service
+    depends_on:
+      - auth-service
+      - rabbitmq-broker
+    build: ./permission-service
+    ports:
+      - ${PERMISSION_BACKEND_PORT}:8000
+    environment:
+      POSTGRES_HOST: auth-postgres
+      POSTGRES_USER: ${AUTH_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${AUTH_POSTGRES_PASSWORD}
+      POSTGRES_NAME: ${AUTH_POSTGRES_NAME}
+      POSTGRES_PORT: ${AUTH_POSTGRES_PORT}
+
+      BACKEND_WORKERS: ${PERMISSION_BACKEND_WORKERS}
+
+      AUTH_HOST: auth-service
+      AUTH_PORT: ${AUTH_BACKEND_PORT}
+      AUTH_API_PATH: ${PERMISSION_AUTH_API_PATH}
+
+      RABBITMQ_HOST: rabbitmq-broker
+      RABBITMQ_PORT: ${RABBITMQ_PORT}
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}

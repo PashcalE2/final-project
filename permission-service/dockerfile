@@ -1,0 +1,32 @@
+FROM python:3.13-slim AS builder
+
+RUN apt-get update && apt-get install -y 
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+WORKDIR /app
+
+COPY pyproject.toml uv.lock ./
+
+RUN uv venv /opt/venv && \
+    uv sync --frozen --no-dev --no-install-project
+
+COPY . .
+
+RUN uv sync --frozen --no-dev
+
+FROM python:3.13-slim
+
+COPY --from=builder /opt/venv /opt/venv
+COPY --from=builder /app /app
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+ENV PATH="/opt/venv/bin:$PATH"
+
+WORKDIR /app
+
+EXPOSE 8000
+
+RUN chmod +x ./entrypoint.sh
+
+CMD ["./entrypoint.sh"]
