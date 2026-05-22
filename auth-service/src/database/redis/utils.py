@@ -1,6 +1,9 @@
 from datetime import datetime, timedelta
 
-from src.settings import settings
+from src.settings import Settings, get_settings
+
+
+settings: Settings = get_settings()
 
 
 def get_request_expiration_seconds() -> int:

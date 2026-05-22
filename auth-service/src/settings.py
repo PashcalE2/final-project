@@ -1,4 +1,5 @@
 from datetime import time
+from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import computed_field, PostgresDsn, RedisDsn
 
@@ -59,9 +60,16 @@ class RedisSettings(BaseSettings):
 
 
 class Settings(BaseSettings):
-    backend: BackendSettings = BackendSettings()
-    db: DatabaseSettings = DatabaseSettings()
-    redis: RedisSettings = RedisSettings()
+    backend: BackendSettings
+    db: DatabaseSettings
+    redis: RedisSettings
 
 
-settings = Settings()
+@lru_cache
+def get_settings() -> Settings:
+    return Settings(
+        backend=BackendSettings(),
+        db=DatabaseSettings(),
+        redis=RedisSettings(),
+    )
+

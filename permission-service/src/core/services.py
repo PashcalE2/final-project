@@ -1,6 +1,11 @@
 from abc import abstractmethod
+from faststream.rabbit import RabbitBroker, RabbitQueue
 
-from src.core.models import PermissionSchema
+from src.core.models import (
+    PermissionListSchema,
+    PermissionSchema,
+    RabbitMQResponseSchema,
+)
 
 
 class AuthService:
@@ -10,34 +15,45 @@ class AuthService:
 
 class PermissionService:
     @abstractmethod
+    async def get_user_permissions(self, user_id: int) -> PermissionListSchema: ...
+
+    @abstractmethod
     async def verify_admin(
         self,
         user_id: int,
     ) -> bool: ...
 
     @abstractmethod
-    async def get_resource_permissions(
+    async def get_resource_permission(
         self,
         resource_id: int,
-    ) -> list[PermissionSchema]: ...
+    ) -> PermissionSchema: ...
 
     @abstractmethod
     async def revoke_groups(
         self,
         target_user_id: int,
-        groups: list[int],
+        group_id_list: list[int],
     ) -> None: ...
 
     @abstractmethod
     async def grant_groups(
         self,
         target_user_id: int,
-        groups: list[int],
+        group_id_list: list[int],
     ) -> None: ...
 
     @abstractmethod
-    async def check_groups_blocking(
+    async def check_groups_not_blocking(
         self,
-        target_user_id: int,
-        groups: list[int],
+        broker: RabbitBroker,
+        queue: RabbitQueue,
+        user_id: int,
+        group_id: int,
+    ) -> None: ...
+
+    @abstractmethod
+    async def save_check_result(
+        self,
+        response: RabbitMQResponseSchema,
     ) -> None: ...

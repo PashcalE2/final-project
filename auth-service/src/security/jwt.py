@@ -1,10 +1,11 @@
 import jwt
 from datetime import datetime, timedelta
 
-from src.settings import settings
 from src.core.models import UserModelSchema
+from src.settings import Settings, get_settings
 
 
+settings: Settings = get_settings()
 ALGORITHM = "HS256"
 
 

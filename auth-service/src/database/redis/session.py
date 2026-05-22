@@ -1,11 +1,12 @@
 from typing import AsyncGenerator
 from redis.asyncio import Redis, ConnectionPool
 
-from src.settings import settings
+from src.settings import Settings, get_settings
 
 
+settings: Settings = get_settings()
 pool = ConnectionPool.from_url(
-    str(settings.redis.dsn._url),
+    str(settings.redis.dsn),
     max_connections=settings.redis.max_connections,
     decode_responses=settings.redis.decode_responses,
 )

@@ -26,13 +26,6 @@ async def get_auth_service(
 bearer_schema = HTTPBearer()
 
 
-async def verify_common_user_id(
-    auth_service: AuthService = Depends(get_auth_service),
-    token: HTTPAuthorizationCredentials = Depends(bearer_schema),
-) -> int:
-    return await auth_service.get_user_id(token=token.credentials)
-
-
 async def get_permission_repository(
     session: AsyncSession = Depends(get_postgres_session),
 ) -> PermissionRepository:

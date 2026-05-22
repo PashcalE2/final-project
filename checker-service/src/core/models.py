@@ -7,26 +7,9 @@ class PermissionSchema(BaseModel):
     name: str
 
 
-class PermissionListSchema(RootModel):
-    root: list[PermissionSchema]
-
-
-class IdListSchema(RootModel):
-    root: list[int]
-
-
 class GroupSchema(BaseModel):
     id: int
     name: str
-    description: str | None
-
-
-class RequestSchema(BaseModel):
-    id: int
-    user_id: int
-    admin_id: int | None
-    group_id: int
-    status_id: int
     description: str | None
 
 
@@ -40,3 +23,9 @@ class RabbitMQResponseSchema(BaseModel):
     request_id: int
     status: int
     detail: str | None
+
+
+class GroupConflictScheme(BaseModel):
+    group_id_1: int
+    group_id_2: int
+    reason: str
