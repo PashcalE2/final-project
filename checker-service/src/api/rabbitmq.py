@@ -24,7 +24,6 @@ async def check_groups_blocking(
     json: str,
     permission_service: PermissionService = Depends(get_permission_service_faststream),
 ) -> None:
-    print(f"{'=' * 20}\n AMOGUS \n {'=' * 20}")
     data: RabbitMQRequestSchema = RabbitMQRequestSchema.model_validate_json(json)
     result: RabbitMQResponseSchema
     try:

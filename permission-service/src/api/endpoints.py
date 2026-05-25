@@ -100,5 +100,4 @@ async def save_check_result(
     ),
 ) -> None:
     data: RabbitMQResponseSchema = RabbitMQResponseSchema.model_validate_json(json)
-    print(f"{'=' * 20}\n SKIBIDI \n {'=' * 20}")
     await permission_service.save_check_result(response=data)
