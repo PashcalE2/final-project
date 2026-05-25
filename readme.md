@@ -20,36 +20,12 @@ docker-compose --env-file ./.env.dev up --build
 2) смотреть доступы у себя
 3) создавать заявки для получения группы с доступами
 
-# Сущности инфологической модели
+# Sequence диаграмма сценария
 
-User:
-1) id - PK
-2) login
-3) password
+Описывает процесс создания и проверки запроса на получения прав.
 
-Group:
-1) id - PK
-2) name
-3) description
+![SD](./media/Sequence-diagram.drawio.png)
 
-Permission:
-1) id - PK
-2) group_id - FK
-3) name
+# ERD диаграмма
 
-Resource:
-1) id - PK
-2) permission_id - FK
-3) name
-4) description
-
-Status:
-1) id - PK
-2) name
-
-Request:
-1) id - PK
-2) executor_id - FK
-3) admin_id - FK
-4) status_id - FK
-5) description
+![ERD](./media/ERD.drawio.png)
