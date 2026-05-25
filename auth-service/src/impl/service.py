@@ -14,6 +14,7 @@ from src.security.jwt import (
     create_access_token,
     decode_refresh_token,
 )
+from src.exception import UserExists, WrongPassword
 
 
 class AuthServiceImpl(AuthService):
@@ -31,7 +32,7 @@ class AuthServiceImpl(AuthService):
             pass
 
         if user is not None:
-            raise
+            raise UserExists()
 
         data.password = get_password_hash(data.password)
         user: UserModelSchema = await self.repository.add(data)
@@ -48,7 +49,7 @@ class AuthServiceImpl(AuthService):
             plain_password=data.password,
             hashed_password=user.password,
         ):
-            raise
+            raise WrongPassword()
 
         return TokensPairSchema(
             refresh_token=create_refresh_token(user),
@@ -57,14 +58,8 @@ class AuthServiceImpl(AuthService):
 
     async def get_new_access_token(self, refresh_token: str) -> AccessTokenSchema:
         data = decode_refresh_token(token=refresh_token)
-        if data is None:
-            raise
 
-        user_id: str | None = data["id"]
-        if user_id is None:
-            raise
-
-        user_id: int = int(user_id)
+        user_id: int = int(data.get("id"))
         user: UserModelSchema = await self.repository.get_user_by_id(user_id)
 
         return TokensPairSchema(

@@ -1,5 +1,6 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import NoResultFound
 from redis.asyncio import Redis
 from json import loads as json_loads, dumps as json_dumps
 
@@ -7,6 +8,7 @@ from src.core.repository import AuthRepository
 from src.core.models import LoginSchema, UserModelSchema
 from src.database.postgres.models import UserModel
 from src.database.redis.utils import get_request_expiration_seconds
+from src.exception import UserNotFound
 
 
 class AuthRepositoryImpl(AuthRepository):
@@ -35,8 +37,8 @@ class AuthRepositoryImpl(AuthRepository):
         try:
             response = await self.session.execute(stmt)
             user: UserModel = response.scalar_one()
-        except:
-            raise
+        except NoResultFound:
+            raise UserNotFound()
 
         user_dict = user.as_dict()
         await self.redis.setex(
@@ -58,8 +60,8 @@ class AuthRepositoryImpl(AuthRepository):
         try:
             response = await self.session.execute(stmt)
             user: UserModel = response.scalar_one()
-        except:
-            raise
+        except NoResultFound:
+            raise UserNotFound()
 
         user_dict = user.as_dict()
         await self.redis.setex(

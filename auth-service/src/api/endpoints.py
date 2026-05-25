@@ -45,10 +45,3 @@ async def get_new_access_token(
     auth_service: AuthService = Depends(get_auth_service),
 ) -> AccessTokenSchema:
     return await auth_service.get_new_access_token(data.refresh_token)
-
-
-@router.get("/info")
-async def get_current_user_info(
-    user: UserModelSchema = Depends(get_current_user),
-) -> UserModelSchema:
-    return user
