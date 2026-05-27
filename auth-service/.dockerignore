@@ -1,7 +1,0 @@
-venv/
-.venv/
-env/
-**/venv/
-**/.venv/
-
-README.md

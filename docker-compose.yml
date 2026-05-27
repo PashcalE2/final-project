@@ -1,73 +1,13 @@
 name: myapp
 
 services:
-  auth-postgres:
-    image: postgres:18.4
-    container_name: auth-postgres
-    ports: 
-      - ${AUTH_POSTGRES_PORT}:5432
+  keycloak:
+    image: keycloak/keycloak:26.6
+    container_name: keycloak
+    command: start-dev
     environment:
-      POSTGRES_USER: ${AUTH_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${AUTH_POSTGRES_PASSWORD}
-      POSTGRES_DB: ${AUTH_POSTGRES_NAME}
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -d ${AUTH_POSTGRES_NAME} -U ${AUTH_POSTGRES_USER}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-  
-  auth-redis:
-    image: redis:8.2.6
-    container_name: auth-redis
-    ports:
-      - ${AUTH_REDIS_PORT}:6379
-    restart: always
-    command: redis-server --requirepass ${AUTH_REDIS_PASSWORD}
-
-  auth-migrations:
-    container_name: auth-migrations
-    depends_on:
-      auth-postgres:
-        condition: service_healthy
-    build: ./auth-service
-    environment:
-      POSTGRES_USER: ${AUTH_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${AUTH_POSTGRES_PASSWORD}
-      POSTGRES_HOST: auth-postgres
-      POSTGRES_PORT: 5432
-      POSTGRES_NAME: ${AUTH_POSTGRES_NAME}
-    entrypoint: ["bash", "/app/run_migrations.sh"]
-    volumes:
-      - ./.alembic/auth/:/app/alembic/versions
-
-  auth-service:
-    container_name: auth-service
-    depends_on:
-      auth-migrations:
-        condition: service_completed_successfully
-      auth-redis:
-        condition: service_started
-    build: ./auth-service
-    ports:
-      - ${AUTH_BACKEND_PORT}:8000
-    environment:
-      POSTGRES_USER: ${AUTH_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${AUTH_POSTGRES_PASSWORD}
-      POSTGRES_HOST: auth-postgres
-      POSTGRES_PORT: 5432
-      POSTGRES_NAME: ${AUTH_POSTGRES_NAME}
-
-      REDIS_HOST: auth-redis
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: ${AUTH_REDIS_PASSWORD}
-      REDIS_EXPIRATION_AT: ${AUTH_REDIS_EXPIRATION_AT}
-
-      BACKEND_WORKERS: ${AUTH_BACKEND_WORKERS}
-      BACKEND_REFRESH_SECRET: ${AUTH_BACKEND_REFRESH_SECRET}
-      BACKEND_ACCESS_SECRET: ${AUTH_BACKEND_ACCESS_SECRET}
-      BACKEND_REFRESH_TOKEN_EXPIRATION_MINUTES: ${AUTH_BACKEND_REFRESH_TOKEN_EXPIRATION_MINUTES}
-      BACKEND_ACCESS_TOKEN_EXPIRATION_MINUTES: ${AUTH_BACKEND_ACCESS_TOKEN_EXPIRATION_MINUTES}
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_BOOTSTRAP_ADMIN_USERNAME}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_BOOTSTRAP_ADMIN_PASSWORD}
 
   rabbitmq-broker:
     container_name: rabbitmq-broker
@@ -139,7 +79,7 @@ services:
       BACKEND_WORKERS: ${PERMISSION_BACKEND_WORKERS}
       BACKEND_ADMIN_GROUP_NAME: ${BACKEND_ADMIN_GROUP_NAME}
 
-      AUTH_HOST: auth-service
+      AUTH_HOST: keycloak
       AUTH_PORT: 8000
       AUTH_API_PATH: ${AUTH_API_PATH}
 
@@ -148,45 +88,19 @@ services:
       RABBITMQ_HOST: rabbitmq-broker
       RABBITMQ_PORT: 5672
 
-  checker-migrations:
-    container_name: checker-migrations
-    depends_on:
-      permission-migrations:
-        condition: service_completed_successfully
-    build: ./checker-service
-    environment:
-      POSTGRES_USER: ${PERMISSION_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${PERMISSION_POSTGRES_PASSWORD}
-      POSTGRES_HOST: permission-postgres
-      POSTGRES_PORT: 5432
-      POSTGRES_NAME: ${PERMISSION_POSTGRES_NAME}
-    entrypoint: ["bash", "/app/run_migrations.sh"]
-    volumes:
-      - ./.alembic/checker/:/app/alembic/versions
-
   checker-service:
     container_name: checker-service
     depends_on:
-      auth-service:
-        condition: service_started
       permission-service:
         condition: service_started
-      checker-migrations:
-        condition: service_completed_successfully
     build: ./checker-service
     ports:
       - ${CHECKER_BACKEND_PORT}:8000
     environment:
-      POSTGRES_USER: ${PERMISSION_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${PERMISSION_POSTGRES_PASSWORD}
-      POSTGRES_HOST: permission-postgres
-      POSTGRES_PORT: 5432
-      POSTGRES_NAME: ${PERMISSION_POSTGRES_NAME}
-
       BACKEND_WORKERS: ${CHECKER_BACKEND_WORKERS}
       BACKEND_ADMIN_GROUP_NAME: ${BACKEND_ADMIN_GROUP_NAME}
 
-      AUTH_HOST: auth-service
+      AUTH_HOST: keycloak
       AUTH_PORT: 8000
       AUTH_API_PATH: ${AUTH_API_PATH}
 
